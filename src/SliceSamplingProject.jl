@@ -3,7 +3,7 @@ module SliceSamplingProject
     using Distributions
 
     function single_var(f,x0)
-        y  = Uniform(0, f(x0))
+        y  = rand(Uniform(0, f(x0)))
         I  = step_out(f, x0, y, w, m)
         x1 = shrinkage(;f, x0, y, I)
         return
@@ -15,7 +15,7 @@ module SliceSamplingProject
                        I::Tuple{Float64, Float64})
         Lbar, Rbar = I
         for i = 1:maxiters
-            U  = Uniform(0,1)
+            U  = rand(Uniform(0,1))
             x1 = Lbar + U * (Rbar-Lbar)
             if y<f(x1) && accept(;f,x0,x1,y,w,L,R)
                  return x1
@@ -56,10 +56,10 @@ module SliceSamplingProject
                       y::Float64,    # vertical level defining the slice
                       w::Float64,    # estimate of the typical size of a slice
                       m::Int64)      # limiting the size of a slice to m*w
-        U = Uniform(0,1)
+        U = rand(Uniform(0,1))
         L = x0 - w*U
         R = L + w
-        V = Uniform(0, 1)
+        V = rand(Uniform(0, 1))
         J = floor(m*V)
         K = (m-1) - J
         while J>0 && y<f(L)
@@ -78,12 +78,12 @@ module SliceSamplingProject
                       y::Float64,    # vertical level defining the slice
                       w::Float64,    # estimate of the typical size of a slice
                       p::Int64)      # limiting the size of a slize to 2^p*w
-        U = Uniform(0,1)
+        U = rand(Uniform(0,1))
         L = x0 - w*U
         R = L + w
         K = p
         while K > 0 && (y<f(L) || y<f(R))
-            V = Uniform(0,1)
+            V = rand(Uniform(0,1))
             if V < 0.5
               L = L - (R-L)
             else
