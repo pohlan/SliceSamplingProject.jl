@@ -5,26 +5,35 @@ module SliceSamplingProject
 
     using Distributions
 
-    function single_var(f,x0;w=1.0,m=4,iters=1000)
+    function single_var(f,                                # function proportional to density
+                        x0::Float64;                      # current point
+                        w::Float64=1.0,                   # starting width of the interval I
+                        m::Int64=4,                       # for step_out, limits the size of I to m*w
+                        p::Int64=4,                       # for doubling, limits ...
+                        iters::Int64=1000,
+                        method::String="step_out")
         x  = zeros(iters)
         xk = x0
         for i = 1:iters
             y  = rand(Uniform(0, f(xk)))
-            I  = step_out(f, xk, y, w, m)
-            xk = shrinkage(;f, x0=xk, y, I,w)
+            if method == "step_out"
+                I  = step_out(f, xk, y, w, m)
+                xk = shrinkage(;f, x0=xk, y, I,w,doubling=false)
+            elseif method == "doubling"
+                I  = doubling(f, xk, y, w, p)
+                xk = shrinkage(;f, x0=xk, y, I,w,doubling=true)
+            else
+                error("Specified method doesn't exist.")
+            end
             x[i] = xk
         end
         return x
     end
 
-    function shrinkage(;f::Function,   # function proportional to density
-                       x0::Float64,   # current point
-                       y::Float64,    # vertical level defining the slice
-                       I::Tuple{Float64, Float64},
-                       doubling=false::Bool,
-                       w)
+    function shrinkage(;f, x0, y, I, w,
+                        doubling=false) # whether or not the doubling procedure is used; if true, requires extra procedure for accept()
         Lbar, Rbar = I
-        maxiters   = 200 # shouldn't be necessary, should be guaranteed to terminate
+        maxiters   = 1000 # shouldn't be necessary, should be guaranteed to terminate
         for i = 1:maxiters
             U  = rand(Uniform(0,1))
             x1 = Lbar + U * (Rbar-Lbar)
@@ -40,8 +49,7 @@ module SliceSamplingProject
         return nothing
     end
 
-    # check again!!
-    function accept(;f, x0, x1, y, w, I,doubling=false)
+    function accept(;f, x0, x1, y, w, I, doubling=false)
         if !doubling
             return true
         end
@@ -64,11 +72,7 @@ module SliceSamplingProject
         return true
     end
 
-    function step_out(f::Function,   # function proportional to density
-                      x0::Float64,   # current point
-                      y::Float64,    # vertical level defining the slice
-                      w::Float64,    # estimate of the typical size of a slice
-                      m::Int64)      # limiting the size of a slice to m*w
+    function step_out(f, x0, y, w, m)
         U = rand(Uniform(0,1))
         L = x0 - w*U
         R = L + w
@@ -86,11 +90,7 @@ module SliceSamplingProject
         return (L, R)
     end
 
-    function doubling(f::Function,   # function proportional to density
-                      x0::Float64,   # current point
-                      y::Float64,    # vertical level defining the slice
-                      w::Float64,    # estimate of the typical size of a slice
-                      p::Int64)      # limiting the size of a slize to 2^p*w
+    function doubling(f, x0, y, w, p)
         U = rand(Uniform(0,1))
         L = x0 - w*U
         R = L + w
