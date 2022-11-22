@@ -1,23 +1,34 @@
+__precompile__(false)
 module SliceSamplingProject
+
+    export single_var
 
     using Distributions
 
-    function single_var(f,x0)
-        y  = rand(Uniform(0, f(x0)))
-        I  = step_out(f, x0, y, w, m)
-        x1 = shrinkage(;f, x0, y, I)
-        return
+    function single_var(f,x0;w=1.0,m=4,iters=1000)
+        x  = zeros(iters)
+        xk = x0
+        for i = 1:iters
+            y  = rand(Uniform(0, f(xk)))
+            I  = step_out(f, xk, y, w, m)
+            xk = shrinkage(;f, x0=xk, y, I,w)
+            x[i] = xk
+        end
+        return x
     end
 
     function shrinkage(;f::Function,   # function proportional to density
                        x0::Float64,   # current point
                        y::Float64,    # vertical level defining the slice
-                       I::Tuple{Float64, Float64})
+                       I::Tuple{Float64, Float64},
+                       doubling=false::Bool,
+                       w)
         Lbar, Rbar = I
+        maxiters   = 200 # shouldn't be necessary, should be guaranteed to terminate
         for i = 1:maxiters
             U  = rand(Uniform(0,1))
             x1 = Lbar + U * (Rbar-Lbar)
-            if y<f(x1) && accept(;f,x0,x1,y,w,L,R)
+            if y<f(x1) && accept(;f,x0,x1,y,w,I,doubling)
                  return x1
             elseif x1 < x0
                 Lbar = x1
@@ -30,9 +41,11 @@ module SliceSamplingProject
     end
 
     # check again!!
-    function accept(;f, x0, x1, y, w, L, R)
-        Lhat = L
-        Rhat = R
+    function accept(;f, x0, x1, y, w, I,doubling=false)
+        if !doubling
+            return true
+        end
+        Lhat, Rhat = I
         D    = false
         while Rhat-Lhat > 1.1*w
             M = (Lhat+Rhat)/2
@@ -48,7 +61,7 @@ module SliceSamplingProject
                 return false
             end
         end
-        return D
+        return true
     end
 
     function step_out(f::Function,   # function proportional to density
