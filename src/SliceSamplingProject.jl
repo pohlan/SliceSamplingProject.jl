@@ -1,9 +1,11 @@
 __precompile__(false)
 module SliceSamplingProject
 
-    export single_var
+    export single_var, metropolis
 
     using Distributions
+
+    include("Metropolis.jl")
 
     function single_var(f,                                # function proportional to density
                         x0::Float64;                      # current point
