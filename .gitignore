@@ -23,5 +23,6 @@ docs/site/
 # environment.
 Manifest.toml
 
-# Saved arrays
+# Saving arrays and jpegs
 *.jld2
+*.jpeg
