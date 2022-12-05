@@ -35,7 +35,7 @@ for (m, method) in enumerate(keys(err))
     for (j,iters) in enumerate(its)
         println("Slice sampling for $iters iterations..")
         for (i,w) in enumerate(ws)
-            x = single_var(f,x0;iters,w,method)
+            x = slice_sampling_1D(f,x0;iters,w,method)
             h = fit(Histogram, x, xedges)
             h_density = h.weights ./ (sum(h.weights)*dx)            # specific for exponential function!
             err[method][i,j] = norm(h_density - true_pdf,1)

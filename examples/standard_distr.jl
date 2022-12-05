@@ -23,7 +23,7 @@ figure(figsize=(28,9))
 for (d, dist) in enumerate(keys(fcts))
     # stepping out procedure
     subplot(2,n,d)
-    x = single_var(fcts[dist],x0;iters=10^5,w=1.0,method="step_out")
+    x = slice_sampling_1D(fcts[dist],x0;iters=10^5,w=1.0,method="step_out")
     hist(x,bins=40,color="grey",alpha=0.4,density=true,label="stepping out")
     xstart, xend = extrema(x)
     plot(xstart:0.01:xend,fcts[dist].(xstart:0.01:xend),color="black",lw=2,label="true pdf")
@@ -32,7 +32,7 @@ for (d, dist) in enumerate(keys(fcts))
     if d == 2 legend() end
     # doubling
     subplot(2,n,d+n)
-    x = single_var(fcts[dist],x0;iters=10^5,w=1.0,method="doubling")
+    x = slice_sampling_1D(fcts[dist],x0;iters=10^5,w=1.0,method="doubling")
     hist(x,bins=40,color="CornFlowerBlue",alpha=0.4,density=true,label="doubling")
     xstart, xend = extrema(x)
     plot(xstart:0.01:xend,fcts[dist].(xstart:0.01:xend),color="black",lw=2,label="true pdf")
